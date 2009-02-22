@@ -20,6 +20,8 @@
 *  GNU General Public License for more details.
 *
 *  This copyright notice MUST APPEAR in all copies of the script!
+*
+* $Id$
 ***************************************************************/
 /**
  * [CLASS/FUNCTION INDEX of SCRIPT]
@@ -37,45 +39,81 @@ require_once(PATH_t3lib.'class.t3lib_svbase.php');
  * @package	TYPO3
  * @subpackage	tx_tokenauth
  */
-class tx_tokenauth_sv1 extends t3lib_svbase {
-				var $prefixId = 'tx_tokenauth_sv1';		// Same as class name
-				var $scriptRelPath = 'sv1/class.tx_tokenauth_sv1.php';	// Path to this script relative to the extension dir.
-				var $extKey = 'token_auth';	// The extension key.
+class tx_tokenauth_sv1 extends tx_sv_authbase {
+	public $prefixId = 'tx_tokenauth_sv1';		// Same as class name
+	public $scriptRelPath = 'sv1/class.tx_tokenauth_sv1.php';	// Path to this script relative to the extension dir.
+	public $extKey = 'token_auth';	// The extension key.
+	protected $conf = array(); // Extension configuration
+	protected $token;
 	
-				/**
-	 * [Put your description here]
+	/**
+	 * This method initialises the service and defines its availability
 	 *
-	 * @return	[type]		...
+	 * @return	boolean		True if service is available, false otherwise
 	 */
-				function init()	{
-					$available = parent::init();
-	
-					// Here you can initialize your class.
-	
-					// The class have to do a strict check if the service is available.
-					// The needed external programs are already checked in the parent class.
-	
-					// If there's no reason for initialization you can remove this function.
-	
-					return $available;
+	public function init() {
+		$this->conf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
+			// If no IP mask is defined, all requests should be ignored
+			// Consequently make this service unavailable
+		if (empty($this->conf['IPmask'])) {
+			$available = false;
+		}
+			// Otherwise the service is always available
+		else {
+			$available = true;
+		}
+		return $available;
+	}
+
+	/**
+	 * This method performs some reinitialisation when the service is called more than once
+	 */
+	public function reset() {
+			// Make sure no token persists from the previous run
+		unset($this->token);
+	}
+
+	/**
+	 * This method tries to match a FE user from the database and returns its record if successful
+	 * 
+	 * @return	mixed	FE user record, or false if no user was matched
+	 */
+	public function getUser() {
+				// TODO: add IP checking
+		$token = t3lib_div::_GP($this->conf['tokenVariable']);
+		if (empty($token)) {
+			$user = false;
+		}
+		else {
+			$this->token = $token;
+				// Received token must match some token in the database
+			$whereClause = 'fe_users.' . $this->conf['feusersField'] . ' = ' . $GLOBALS['TYPO3_DB']->fullQuoteStr($token, 'fe_users');
+				// Add pid and enable fields conditions
+			$whereClause .= $this->db_user['check_pid_clause'].$this->db_user['enable_clause'];
+			$dbres = $GLOBALS['TYPO3_DB']->exec_SELECTquery('*', $this->db_user['table'], $whereClause);
+			if ($dbres) {
+				if ($GLOBALS['TYPO3_DB']->sql_num_rows($dbres) > 0) {
+					$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbres);
 				}
-	
-				/**
-	 * [Put your description here]
-	 * performs the service processing
+				$GLOBALS['TYPO3_DB']->sql_free_result($dbres);
+			}
+		}
+		return $user;
+	}
+
+	/**
+	 * This method performs the authentication by matching the token received
 	 *
-	 * @param	string		Content which should be processed.
-	 * @param	string		Content type
-	 * @param	array		Configuration array
-	 * @return	boolean
+	 * @param	array	$user: FE user record
 	 */
-				function process($content='', $type='', $conf=array())	{
-	
-					// Depending on the service type there's not a process() function.
-					// You have to implement the API of that service type.
-	
-					return FALSE;
-				}
+	public function authUser($user) {
+		if ($this->token == $user[$this->conf['feusersField']]) {
+			return 100;
+		}
+		else {
+			return 200;
+		}
+	}
 }
 
 

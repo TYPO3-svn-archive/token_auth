@@ -1,0 +1,8 @@
+# cat=basic//; type=string; label=IP mask: Comma-separated list of IP addresses (* can be used as wildcard) allowed to send token-based authentication requests. Leaving empty will block all request.
+IPmask = 127.0.0.1
+
+# cat=basic//; type=string; label=Database field: Name of the fe_users table field which contains the token
+feusersField = tx_tokenauth_token
+
+# cat=basic//; type=string; label=Token variable: Name of the GET/POST variable containing the token in the request
+tokenVariable = token
