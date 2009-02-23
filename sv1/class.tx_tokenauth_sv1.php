@@ -92,9 +92,17 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 				$this->token = $token;
 					// Received token must match some token in the database
 				$whereClause = 'fe_users.' . $this->conf['feusersField'] . ' = ' . $GLOBALS['TYPO3_DB']->fullQuoteStr($token, 'fe_users');
-					// Add pid and enable fields conditions
-					// TODO: use extension configuration for pid, instead of GP variable
-				$whereClause .= $this->db_user['check_pid_clause'].$this->db_user['enable_clause'];
+					// Add enable fields condition
+				$whereClause .= $this->db_user['enable_clause'];
+					// If no specific storage pid is defined, use default pid clause
+				if (empty($this->conf['storagePID'])) {
+					$whereClause .= $this->db_user['check_pid_clause'];
+				}
+				else {
+					$whereClause .= ' AND pid IN ('.$this->conf['storagePID'].')';
+				}
+					// TODO: add a hook to manipulate where clause (could be used to test expiry of token)
+				
 				$dbres = $GLOBALS['TYPO3_DB']->exec_SELECTquery('*', $this->db_user['table'], $whereClause);
 				if ($dbres) {
 					if ($GLOBALS['TYPO3_DB']->sql_num_rows($dbres) > 0) {

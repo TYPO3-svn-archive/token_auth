@@ -6,3 +6,6 @@ feusersField = tx_tokenauth_token
 
 # cat=basic//; type=string; label=Token variable: Name of the GET/POST variable containing the token in the request
 tokenVariable = token
+
+# cat=basic//; type=string; label=Storage PID: id of the pages where FE users are stored (comma-separated). This will be overriden if a pid is passed in the login call.
+storagePID =
