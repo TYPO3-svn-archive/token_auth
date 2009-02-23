@@ -79,24 +79,35 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 	 * @return	mixed	FE user record, or false if no user was matched
 	 */
 	public function getUser() {
-				// TODO: add IP checking
-		$token = t3lib_div::_GP($this->conf['tokenVariable']);
-		if (empty($token)) {
-			$user = false;
-		}
-		else {
-			$this->token = $token;
-				// Received token must match some token in the database
-			$whereClause = 'fe_users.' . $this->conf['feusersField'] . ' = ' . $GLOBALS['TYPO3_DB']->fullQuoteStr($token, 'fe_users');
-				// Add pid and enable fields conditions
-			$whereClause .= $this->db_user['check_pid_clause'].$this->db_user['enable_clause'];
-			$dbres = $GLOBALS['TYPO3_DB']->exec_SELECTquery('*', $this->db_user['table'], $whereClause);
-			if ($dbres) {
-				if ($GLOBALS['TYPO3_DB']->sql_num_rows($dbres) > 0) {
-					$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbres);
-				}
-				$GLOBALS['TYPO3_DB']->sql_free_result($dbres);
+			// Check if request IP address is within allowed range
+		$ip = t3lib_div::getIndpEnv('REMOTE_ADDR');
+		if (t3lib_div::cmpIP($ip, $this->conf['IPmask'])) {
+				// Get the token
+			$token = t3lib_div::_GP($this->conf['tokenVariable']);
+				// If token is empty, no user matching can be done
+			if (empty($token)) {
+				$user = false;
 			}
+			else {
+				$this->token = $token;
+					// Received token must match some token in the database
+				$whereClause = 'fe_users.' . $this->conf['feusersField'] . ' = ' . $GLOBALS['TYPO3_DB']->fullQuoteStr($token, 'fe_users');
+					// Add pid and enable fields conditions
+					// TODO: use extension configuration for pid, instead of GP variable
+				$whereClause .= $this->db_user['check_pid_clause'].$this->db_user['enable_clause'];
+				$dbres = $GLOBALS['TYPO3_DB']->exec_SELECTquery('*', $this->db_user['table'], $whereClause);
+				if ($dbres) {
+					if ($GLOBALS['TYPO3_DB']->sql_num_rows($dbres) > 0) {
+						$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbres);
+							// TODO: add a hook for postprocessing (e.g. delete token to provide one-time token feature)
+					}
+					$GLOBALS['TYPO3_DB']->sql_free_result($dbres);
+				}
+			}
+		}
+			// IP didn't match allowed range, return false to prevent authentication with this service
+		else {
+			$user = false;
 		}
 		return $user;
 	}
@@ -108,9 +119,11 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 	 */
 	public function authUser($user) {
 		if ($this->token == $user[$this->conf['feusersField']]) {
+				// TODO: add a hook for postprocessing (e.g. delete token to provide one-time token feature)
 			return 100;
 		}
 		else {
+				// TODO: make this return value configurable (false to make service final)
 			return 200;
 		}
 	}
