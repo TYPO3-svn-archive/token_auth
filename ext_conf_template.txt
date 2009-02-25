@@ -9,3 +9,6 @@ tokenVariable = token
 
 # cat=basic//; type=string; label=Storage PID: id of the pages where FE users are stored (comma-separated). This will be overriden if a pid is passed in the login call.
 storagePID =
+
+# cat=basic/enable/; type=boolean; label=Debug: Check to turn on debugging to the Dev Log. Debugging also takes place if TYPO3_DLOG is true. Requires devlog or similar extension.
+debug = 0

@@ -53,6 +53,9 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 	 */
 	public function init() {
 		$this->conf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
+		if ($this->conf['debug'] || TYPO3_DLOG) {
+			t3lib_div::devLog('Initialising', 'token_auth', 0, $this->conf);
+		}
 			// If no IP mask is defined, all requests should be ignored
 			// Consequently make this service unavailable
 		if (empty($this->conf['IPmask'])) {
@@ -81,9 +84,15 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 	public function getUser() {
 			// Check if request IP address is within allowed range
 		$ip = t3lib_div::getIndpEnv('REMOTE_ADDR');
+		if ($this->conf['debug'] || TYPO3_DLOG) {
+			t3lib_div::devLog('IP to check: '.$ip, 'token_auth', 0);
+		}
 		if (t3lib_div::cmpIP($ip, $this->conf['IPmask'])) {
 				// Get the token
 			$token = t3lib_div::_GP($this->conf['tokenVariable']);
+			if ($this->conf['debug'] || TYPO3_DLOG) {
+				t3lib_div::devLog('Received token: '.$token, 'token_auth', 0);
+			}
 				// If token is empty, no user matching can be done
 			if (empty($token)) {
 				$user = false;
@@ -102,7 +111,12 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 					$whereClause .= ' AND pid IN ('.$this->conf['storagePID'].')';
 				}
 					// TODO: add a hook to manipulate where clause (could be used to test expiry of token)
-				
+					// Log SQL query to debug
+				if ($this->conf['debug'] || TYPO3_DLOG) {
+					$query = $GLOBALS['TYPO3_DB']->SELECTquery('*', $this->db_user['table'], $whereClause);
+					t3lib_div::devLog($query, 'token_auth', 0);
+				}
+					// Execute SQL query
 				$dbres = $GLOBALS['TYPO3_DB']->exec_SELECTquery('*', $this->db_user['table'], $whereClause);
 				if ($dbres) {
 					if ($GLOBALS['TYPO3_DB']->sql_num_rows($dbres) > 0) {
@@ -116,6 +130,14 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 			// IP didn't match allowed range, return false to prevent authentication with this service
 		else {
 			$user = false;
+		}
+		if ($this->conf['debug'] || TYPO3_DLOG) {
+			if ($user === false) {
+				t3lib_div::devLog('No user found', 'token_auth', 2);
+			}
+			else {
+				t3lib_div::devLog('User found', 'token_auth', -1, $user);
+			}
 		}
 		return $user;
 	}
