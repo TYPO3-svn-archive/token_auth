@@ -123,7 +123,13 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 						$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbres);
 							// TODO: add a hook for postprocessing (e.g. delete token to provide one-time token feature)
 					}
+					else {
+						$user = false;
+					}
 					$GLOBALS['TYPO3_DB']->sql_free_result($dbres);
+				}
+				else {
+					$user = false;
 				}
 			}
 		}
