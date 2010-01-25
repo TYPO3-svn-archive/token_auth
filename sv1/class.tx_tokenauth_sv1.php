@@ -20,14 +20,7 @@
 *  GNU General Public License for more details.
 *
 *  This copyright notice MUST APPEAR in all copies of the script!
-*
-* $Id$
 ***************************************************************/
-/**
- * [CLASS/FUNCTION INDEX of SCRIPT]
- *
- * Hint: use extdeveval to insert/update function index above.
- */
 
 require_once(PATH_t3lib.'class.t3lib_svbase.php');
 
@@ -35,9 +28,11 @@ require_once(PATH_t3lib.'class.t3lib_svbase.php');
 /**
  * Service "Token authentication" for the "token_auth" extension.
  *
- * @author	Francois Suter (Cobweb) <typo3@cobweb.ch>
- * @package	TYPO3
+ * @author		Francois Suter (Cobweb) <typo3@cobweb.ch>
+ * @package		TYPO3
  * @subpackage	tx_tokenauth
+ *
+ * $Id$
  */
 class tx_tokenauth_sv1 extends tx_sv_authbase {
 	public $prefixId = 'tx_tokenauth_sv1';		// Same as class name
@@ -59,11 +54,11 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 			// If no IP mask is defined, all requests should be ignored
 			// Consequently make this service unavailable
 		if (empty($this->conf['IPmask'])) {
-			$available = false;
+			$available = FALSE;
 		}
 			// Otherwise the service is always available
 		else {
-			$available = true;
+			$available = TRUE;
 		}
 		return $available;
 	}
@@ -85,19 +80,18 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 			// Check if request IP address is within allowed range
 		$ip = t3lib_div::getIndpEnv('REMOTE_ADDR');
 		if ($this->conf['debug'] || TYPO3_DLOG) {
-			t3lib_div::devLog('IP to check: '.$ip, 'token_auth', 0);
+			t3lib_div::devLog('IP to check: ' . $ip, 'token_auth', 0);
 		}
 		if (t3lib_div::cmpIP($ip, $this->conf['IPmask'])) {
 				// Get the token
 			$token = t3lib_div::_GP($this->conf['tokenVariable']);
 			if ($this->conf['debug'] || TYPO3_DLOG) {
-				t3lib_div::devLog('Received token: '.$token, 'token_auth', 0);
+				t3lib_div::devLog('Received token: ' . $token, 'token_auth', 0);
 			}
 				// If token is empty, no user matching can be done
 			if (empty($token)) {
-				$user = false;
-			}
-			else {
+				$user = FALSE;
+			} else {
 				$this->token = $token;
 					// Received token must match some token in the database
 				$whereClause = 'fe_users.' . $this->conf['feusersField'] . ' = ' . $GLOBALS['TYPO3_DB']->fullQuoteStr($token, 'fe_users');
@@ -106,9 +100,8 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 					// If no specific storage pid is defined, use default pid clause
 				if (empty($this->conf['storagePID'])) {
 					$whereClause .= $this->db_user['check_pid_clause'];
-				}
-				else {
-					$whereClause .= ' AND pid IN ('.$this->conf['storagePID'].')';
+				} else {
+					$whereClause .= ' AND pid IN (' . $this->conf['storagePID'] . ')';
 				}
 					// TODO: add a hook to manipulate where clause (could be used to test expiry of token)
 					// Log SQL query to debug
@@ -122,26 +115,27 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 					if ($GLOBALS['TYPO3_DB']->sql_num_rows($dbres) > 0) {
 						$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbres);
 							// TODO: add a hook for postprocessing (e.g. delete token to provide one-time token feature)
-					}
-					else {
-						$user = false;
+					} else {
+						$user = FALSE;
 					}
 					$GLOBALS['TYPO3_DB']->sql_free_result($dbres);
 				}
 				else {
-					$user = false;
+					$user = FALSE;
 				}
 			}
-		}
+
 			// IP didn't match allowed range, return false to prevent authentication with this service
-		else {
-			$user = false;
+		} else {
+			$user = FALSE;
+			if ($this->conf['debug'] || TYPO3_DLOG) {
+				t3lib_div::devLog('IP not allowed: ' . $ip, 'token_auth', 0);
+			}
 		}
 		if ($this->conf['debug'] || TYPO3_DLOG) {
-			if ($user === false) {
+			if ($user === FALSE) {
 				t3lib_div::devLog('No user found', 'token_auth', 2);
-			}
-			else {
+			} else {
 				t3lib_div::devLog('User found', 'token_auth', -1, $user);
 			}
 		}
@@ -157,8 +151,7 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 		if ($this->token == $user[$this->conf['feusersField']]) {
 				// TODO: add a hook for postprocessing (e.g. delete token to provide one-time token feature)
 			return 100;
-		}
-		else {
+		} else {
 				// TODO: make this return value configurable (false to make service final)
 			return 200;
 		}
