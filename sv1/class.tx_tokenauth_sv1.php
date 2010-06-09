@@ -39,7 +39,6 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 	public $scriptRelPath = 'sv1/class.tx_tokenauth_sv1.php';	// Path to this script relative to the extension dir.
 	public $extKey = 'token_auth';	// The extension key.
 	protected $conf = array(); // Extension configuration
-	protected $token;
 	
 	/**
 	 * This method initialises the service and defines its availability
@@ -64,14 +63,6 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 	}
 
 	/**
-	 * This method performs some reinitialisation when the service is called more than once
-	 */
-	public function reset() {
-			// Make sure no token persists from the previous run
-		unset($this->token);
-	}
-
-	/**
 	 * This method tries to match a FE user from the database and returns its record if successful
 	 * 
 	 * @return	mixed	FE user record, or false if no user was matched
@@ -92,7 +83,6 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 			if (empty($token)) {
 				$user = FALSE;
 			} else {
-				$this->token = $token;
 					// Received token must match some token in the database
 				$whereClause = 'fe_users.' . $this->conf['feusersField'] . ' = ' . $GLOBALS['TYPO3_DB']->fullQuoteStr($token, 'fe_users');
 					// Add enable fields condition
@@ -114,7 +104,6 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 				if ($dbres) {
 					if ($GLOBALS['TYPO3_DB']->sql_num_rows($dbres) > 0) {
 						$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbres);
-							// TODO: add a hook for postprocessing (e.g. delete token to provide one-time token feature)
 					} else {
 						$user = FALSE;
 					}
@@ -148,15 +137,26 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 	 * This method performs the authentication by matching the token received
 	 *
 	 * @param	array	$user: FE user record
+	 * @return	mixed	A status code, or false if authentication process should stop
 	 */
 	public function authUser($user) {
-		if ($this->token == $user[$this->conf['feusersField']]) {
+		$status = FALSE;
+
+			// Get the token
+		$token = t3lib_div::_GP($this->conf['tokenVariable']);
+		if ($token === $user[$this->conf['feusersField']]) {
 				// TODO: add a hook for postprocessing (e.g. delete token to provide one-time token feature)
-			return 100;
+			$status = 200;
 		} else {
-				// TODO: make this return value configurable (false to make service final)
-			return 200;
+				// If service was not set to be final, 100 to let authentication chain continue
+				// else return false to stop the chain
+			if (empty($this->conf['finalService'])) {
+				$status = 100;
+			} else {
+				$status = FALSE;
+			}
 		}
+		return $status;
 	}
 }
 

@@ -11,7 +11,7 @@ t3lib_extMgm::addService($_EXTKEY,  'auth' /* sv type */,  'tx_tokenauth_sv1' /*
 		'subtype' => 'getUserFE,authUserFE',
 
 		'available' => TRUE,
-		'priority' => 60,
+		'priority' => 110,
 		'quality' => 50,
 
 		'os' => '',

@@ -12,3 +12,6 @@ storagePID =
 
 # cat=basic/enable/; type=boolean; label=Debug: Check to turn on debugging to the Dev Log. Debugging also takes place if TYPO3_DLOG is true. Requires devlog or similar extension.
 debug = 0
+
+# cat=advanced/enable/; type=boolean; label=Make service final: If this is checked, the Token Authentication will be the last service authentication service called in case of failure. No further service will be called. If this is unclear, please refer to the manual. Be sure you fully understand the implications of this setting.
+finalService = 0
