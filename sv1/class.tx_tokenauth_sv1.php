@@ -55,9 +55,9 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 			// Consequently make this service unavailable
 		if (empty($this->conf['IPmask'])) {
 			$available = FALSE;
-		}
+
 			// Otherwise the service is always available
-		else {
+		} else {
 			$available = TRUE;
 		}
 		return $available;
@@ -119,8 +119,7 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 						$user = FALSE;
 					}
 					$GLOBALS['TYPO3_DB']->sql_free_result($dbres);
-				}
-				else {
+				} else {
 					$user = FALSE;
 				}
 			}
@@ -131,12 +130,15 @@ class tx_tokenauth_sv1 extends tx_sv_authbase {
 			if ($this->conf['debug'] || TYPO3_DLOG) {
 				t3lib_div::devLog('IP not allowed: ' . $ip, 'token_auth', 0);
 			}
+			if ($this->conf['debug'] || TYPO3_DLOG) {
+				t3lib_div::devLog('IP not allowed: ' . $ip, 'token_auth', 0);
+			}
 		}
 		if ($this->conf['debug'] || TYPO3_DLOG) {
 			if ($user === FALSE) {
-				t3lib_div::devLog('No user found', 'token_auth', 2);
+				t3lib_div::devLog('No user found with token ' . $token, 'token_auth', 2);
 			} else {
-				t3lib_div::devLog('User found', 'token_auth', -1, $user);
+				t3lib_div::devLog('User found with token ' . $token, 'token_auth', -1, $user);
 			}
 		}
 		return $user;
